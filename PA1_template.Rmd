@@ -35,7 +35,7 @@ median <- median(daily_steps$steps_per_day)
 The median is `r median`
 
 ## What is the average daily activity pattern?
-
+ 
 
 ## Imputing missing values
 
