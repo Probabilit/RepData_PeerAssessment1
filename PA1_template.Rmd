@@ -14,10 +14,11 @@ unzip(zipfile = "activity.zip")
 activity <- read.csv("activity.csv")
 activity$date <- as.Date(activity$date)
 ```
+
 ## What is mean total number of steps taken per day?
 ```{r}
 daily_steps <- activity %>% group_by(date) %>%
-    summarise(steps_per_day = sum(steps, na.rm = TRUE))
+    summarise(steps_per_day = sum(steps)) %>% na.omit()
 
 ```
 1. Histogram: Total number of steps taken each day 
@@ -43,6 +44,7 @@ steps_interval <- activity %>%
         summarize(intervalsteps = mean(steps, na.rm = TRUE)) 
 plot(steps_interval$interval, steps_interval$intervalsteps, type = "l", xlab = "5-minute Interval", ylab = "Average steps", main = "Average steps by 5-minute intervals")
 ```
+
 2. Maximum average steps in a 5-minute interval
 ```{r}
 maxsteps <- max(steps_interval$intervalsteps)
@@ -54,13 +56,14 @@ The maximum average steps in a 5-minute interval are `r maxsteps`
 ```{r}
 missingvalues <- sum(is.na(activity$steps))
 ```
-There are `r missingvalues' in the data set. 
+There are `r missingvalues` in the data set. 
+
 2. Create main dataset imputing mean to NA 
 ```{r}
 activity1 <- activity
 activity1$steps[is.na(activity1$steps)] <- mean(activity1$steps, na.rm=TRUE)
 ```
-3. Total number of steps df on each day after NA = mean
+3. Total number of steps on each day after NA = mean
 ```{r}
 daily_steps1 <- activity1 %>% group_by(date) %>%
     summarise(steps_per_day = sum(steps))
@@ -81,4 +84,40 @@ mediansteps1 <- median(daily_steps1$steps_per_day)
 ```
 The median is `r mediansteps1`
 
+```{r}
+mean_difference <- meansteps1 - meansteps
+```
+The mean of both imputed and non-imputed data is the same. 
+```{r}
+median_difference <- mediansteps1 - mediansteps
+```
+The imputed median is higher by `r median_difference` compared to the non-imputed mean.   
+
+The total daily number of steps in the second data set (after imputing mean at NA) is higher than in the first data set.  
+
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+activitybyday <- activity1 
+activitybyday$day <- ifelse(weekdays(activitybyday$date) %in% c("Saturday", "Sunday"), "weekend", "weekday")
+activityweekday <- filter(activitybyday, activitybyday$day == "weekday")
+activityweekend <- filter(activitybyday, activitybyday$day == "weekend")  
+
+activityweekday <- activityweekday %>% group_by(interval) %>% summarise(steps = mean(steps))
+activityweekday$day <- "weekday"
+activityweekend <- activityweekend %>% group_by(interval) %>% summarise(steps = mean(steps))
+activityweekend$day <- "weekend"
+Combined <- rbind(activityweekday, activityweekend)
+Combined$day <- as.factor(Combined$day)
+
+g<- ggplot(Combined, aes(interval, steps))
+g+  geom_line() + 
+    facet_grid(day~.) + labs(x= "Interval") + labs(y= "Steps") + ggtitle("Average steps: Weekday vs Weekend")
+```
+
+Weekday activity spikes higher than weekend activity in the mornings, while weekend activity in afternoon is higher than during weekdays. 
+
+  
+
+
+
+
